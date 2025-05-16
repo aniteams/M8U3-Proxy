@@ -12,13 +12,20 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
 
     const response = await axios.get(url, {
       responseType: 'stream',
-      headers: { Accept: "*/*", Referer: "https://megacloud.club/" }
+      headers: {
+        Accept: "*/*",
+        Referer: "https://megacloud.club/",
+        Origin: "https://megacloud.club"
+      }
     });
 
     const headers = { ...response.headers };
     if (!isStaticFiles) delete headers['content-length'];
 
     res.cacheControl = { maxAge: headers['cache-control'] };
+    headers["Access-Control-Allow-Origin"] = "*";
+    headers["Access-Control-Allow-Headers"] = "*";
+    headers["Access-Control-Allow-Methods"] = "*"
     res.set(headers);
 
     if (isStaticFiles) {
