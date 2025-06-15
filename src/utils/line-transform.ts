@@ -38,6 +38,10 @@ export class LineTransform extends Transform {
       return `m3u8-proxy?url=${this.baseUrl}${line}`;
     }
 
+    if (line.startsWith("http") && !line.endsWith(".m3u8")) {
+      return `m3u8-proxy?url=${encodeURIComponent(line)}`;
+    }
+
     if (allowedExtensions.some(ext => line.endsWith(ext))) {
       return `m3u8-proxy?url=${line}`;
     }

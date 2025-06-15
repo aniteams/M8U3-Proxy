@@ -32,6 +32,10 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
       return response.data.pipe(res);
     }
 
+    if (!url.endsWith(".m3u8")) {
+      return response.data.pipe(res);
+    }
+
     const transform = new LineTransform(baseUrl);
     response.data.pipe(transform).pipe(res);
   } catch (error: any) {
