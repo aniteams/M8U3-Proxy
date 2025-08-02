@@ -1,6 +1,6 @@
 import { Transform, TransformCallback } from 'stream';
 
-export const allowedExtensions = ['.ts', '.png', '.jpg', '.webp', '.ico', '.html', '.js', '.css', '.txt'];
+export const allowedExtensions = ['.ts', '.png', '.jpg', '.webp', '.ico', '.html', '.js', '.css', '.txt', '.vtt'];
 
 export class LineTransform extends Transform {
   private buffer: string;
