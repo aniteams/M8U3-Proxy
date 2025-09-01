@@ -5,18 +5,25 @@ import { allowedExtensions, LineTransform } from "../utils/line-transform";
 export const m3u8Proxy = async (req: Request, res: Response) => {
   try {
     const url = req.query.url as string;
+    const customReferer = req.query.referer as string; // optional referer param
+
     if (!url) return res.status(400).json("url is required");
 
     const isStaticFiles = allowedExtensions.some(ext => url.endsWith(ext));
     const baseUrl = url.replace(/[^/]+$/, "");
 
-    // List of Referer/Origin combinations to try
-    const headerOptions = [
+    // Default Referer/Origin list
+    const defaultHeaderOptions = [
       { Referer: "https://megaplay.buzz/", Origin: "https://megaplay.buzz" },
       { Referer: "https://vidwish.live/", Origin: "https://vidwish.live" },
       { Referer: "https://kwik.cx/", Origin: "https://kwik.cx" },
       { Referer: "https://tubeplx.viddsn.cfd/", Origin: "https://tubeplx.viddsn.cfd" }
     ];
+
+    // If custom referer is provided, use it for both Referer and Origin
+    const headerOptions = customReferer
+      ? [{ Referer: customReferer, Origin: customReferer }]
+      : defaultHeaderOptions;
 
     let response;
     let lastError;
@@ -31,11 +38,11 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
             Origin: headers.Origin
           }
         });
-        break; // If successful, break out of the loop
+        break; // success
       } catch (err: any) {
         lastError = err;
         if (err.response?.status !== 403 && err.response?.status !== 401) {
-          break; // If error is not 403/401, break the loop (e.g., 404)
+          break; // stop on non-auth errors
         }
       }
     }
@@ -57,6 +64,7 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
 
     const transform = new LineTransform(baseUrl);
     response.data.pipe(transform).pipe(res);
+
   } catch (error: any) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
