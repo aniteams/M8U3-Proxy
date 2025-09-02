@@ -5,13 +5,12 @@ import { allowedExtensions, LineTransform } from "../utils/line-transform";
 export const m3u8Proxy = async (req: Request, res: Response) => {
   try {
     const url = req.query.url as string;
-    const customReferer = req.query.referer as string; // optional referer param
+    const customReferer = req.query.referer as string;
     if (!url) return res.status(400).json("url is required");
 
     const isStaticFiles = allowedExtensions.some(ext => url.endsWith(ext));
     const baseUrl = url.replace(/[^/]+$/, "");
 
-    // Default Referer/Origin list
     const defaultHeaderOptions = [
       { Referer: "https://megaplay.buzz/", Origin: "https://megaplay.buzz" },
       { Referer: "https://vidwish.live/", Origin: "https://vidwish.live" },
@@ -25,7 +24,7 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
         const refererUrl = new URL(customReferer);
         headerOptions = [{
           Referer: customReferer,
-          Origin: refererUrl.origin // strips down to scheme + domain
+          Origin: refererUrl.origin
         }];
       } catch {
         return res.status(400).json("Invalid referer URL");
@@ -39,19 +38,26 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
 
     for (const headers of headerOptions) {
       try {
+        const reqHeaders: any = {
+          Accept: "*/*",
+          Referer: headers.Referer
+        };
+        if (headers.Origin) {
+          reqHeaders.Origin = headers.Origin;
+        }
+
+        
+        console.log("Axios request headers:", reqHeaders);
+
         response = await axios.get(url, {
           responseType: 'stream',
-          headers: {
-            Accept: "*/*",
-            Referer: headers.Referer,
-            Origin: headers.Origin
-          }
+          headers: reqHeaders
         });
         break; // success
       } catch (err: any) {
         lastError = err;
         if (err.response?.status !== 403 && err.response?.status !== 401) {
-          break; // stop on non-auth errors
+          break;
         }
       }
     }
