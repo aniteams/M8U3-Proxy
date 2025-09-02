@@ -6,7 +6,6 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
   try {
     const url = req.query.url as string;
     const customReferer = req.query.referer as string; // optional referer param
-
     if (!url) return res.status(400).json("url is required");
 
     const isStaticFiles = allowedExtensions.some(ext => url.endsWith(ext));
@@ -20,10 +19,20 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
       { Referer: "https://tubeplx.viddsn.cfd/", Origin: "https://tubeplx.viddsn.cfd" }
     ];
 
-    // If custom referer is provided, use it for both Referer and Origin
-    const headerOptions = customReferer
-      ? [{ Referer: customReferer, Origin: customReferer }]
-      : defaultHeaderOptions;
+    let headerOptions;
+    if (customReferer) {
+      try {
+        const refererUrl = new URL(customReferer);
+        headerOptions = [{
+          Referer: customReferer,
+          Origin: refererUrl.origin // strips down to scheme + domain
+        }];
+      } catch {
+        return res.status(400).json("Invalid referer URL");
+      }
+    } else {
+      headerOptions = defaultHeaderOptions;
+    }
 
     let response;
     let lastError;
